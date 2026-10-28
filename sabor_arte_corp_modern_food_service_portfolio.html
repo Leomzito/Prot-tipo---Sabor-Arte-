@@ -1,0 +1,781 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor & Arte Corp - Grupo de Gastronomia & Redes AlimentÃ­cias</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="tailwind-config.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Alpine JS for light reactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body x-data="appData()" class="antialiased selection:bg-amber-500 selection:text-black">
+
+    <!-- Toast Notification Container -->
+    <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none" id="toastContainer">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="toast.visible" 
+                 x-transition:enter="transition ease-out duration-300 transform translate-y-2 opacity-0"
+                 x-transition:enter-end="transform translate-y-0 opacity-100"
+                 x-transition:leave="transition ease-in duration-200 transform opacity-0"
+                 class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl glass-panel shadow-2xl border-l-4"
+                 :class="toast.type === 'success' ? 'border-emerald-500 text-emerald-300' : 'border-amber-500 text-amber-300'">
+                <i :class="toast.type === 'success' ? 'fa-solid fa-circle-check text-xl' : 'fa-solid fa-circle-info text-xl'"></i>
+                <span class="text-sm font-medium text-gray-100" x-text="toast.message"></span>
+            </div>
+        </template>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="fixed top-0 left-0 w-full z-40 glass-header border-b border-white/10 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-black font-extrabold text-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-tight text-white block leading-tight">Sabor & Arte <span class="text-amber-500 text-xs tracking-widest uppercase block font-semibold">Corp</span></span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+                <a href="#about" class="hover:text-amber-400 transition-colors">Sobre NÃ³s</a>
+                <a href="#brands" class="hover:text-amber-400 transition-colors">Nossas Marcas & CardÃ¡pio</a>
+                <a href="#stores" class="hover:text-amber-400 transition-colors">Unidades</a>
+                <a href="#franchise" class="hover:text-amber-400 transition-colors">Seja Franqueado</a>
+                <a href="#careers" class="hover:text-amber-400 transition-colors">Trabalhe Conosco</a>
+            </nav>
+
+            <!-- Header Right Actions -->
+            <div class="flex items-center gap-4">
+                <button @click="isCartOpen = true" class="relative p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10">
+                    <i class="fa-solid fa-shopping-bag text-lg"></i>
+                    <span x-show="cartTotalCount > 0" 
+                          x-text="cartTotalCount"
+                          class="absolute -top-1.5 -right-1.5 bg-amber-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md animate-bounce">
+                    </span>
+                </button>
+                <a href="#menu" class="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold text-sm transition-all shadow-lg shadow-amber-500/25 active:scale-95">
+                    <span>Fazer Pedido</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+
+                <!-- Mobile menu toggle -->
+                <button @click="isMobileNavOpen = !isMobileNavOpen" class="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5">
+                    <i :class="isMobileNavOpen ? 'fa-solid fa-xmark text-xl' : 'fa-solid fa-bars text-xl'"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Navigation -->
+        <div x-show="isMobileNavOpen" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             class="md:hidden border-b border-white/10 bg-brand-dark px-4 pt-2 pb-6 space-y-3">
+            <a @click="isMobileNavOpen = false" href="#about" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-white/5">Sobre NÃ³s</a>
+            <a @click="isMobileNavOpen = false" href="#brands" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-white/5">Nossas Marcas & CardÃ¡pio</a>
+            <a @click="isMobileNavOpen = false" href="#stores" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-white/5">Unidades</a>
+            <a @click="isMobileNavOpen = false" href="#franchise" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-white/5">Seja Franqueado</a>
+            <a @click="isMobileNavOpen = false" href="#careers" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-white/5">Trabalhe Conosco</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-20">
+
+        <!-- HERO SECTION -->
+        <section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden py-16 lg:py-24">
+            <!-- Background Image with Overlay -->
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1920&q=80" 
+                     alt="Sabor e Arte Hero Background" 
+                     class="w-full h-full object-cover object-center scale-105 filter brightness-50"
+                     onerror="this.src='https://placehold.co/1920x1080/1a1a1e/ffffff?text=Sabor+%26+Arte+Gastronomia'">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#0f0f12] via-[#0f0f12]/70 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-[#0f0f12] via-transparent to-[#0f0f12]"></div>
+                <!-- Ambient Lighting Circle -->
+                <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/20 rounded-full blur-[120px] pulse-glow"></div>
+            </div>
+
+            <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+                <!-- Badge -->
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-amber-500/30 text-amber-400 text-xs sm:text-sm font-semibold mb-8 animate-fade-in">
+                    <span class="flex h-2 w-2 rounded-full bg-amber-400 animate-ping"></span>
+                    <span>LÃ­der Global em Gastronomia & ExperiÃªncias Gourmet</span>
+                </div>
+
+                <!-- Main Title -->
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight max-w-4xl leading-[1.15]">
+                    Transformando Ingredientes em <span class="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600">Arte GastronÃ´mica</span>
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="mt-6 text-lg sm:text-xl text-gray-300 max-w-2xl font-normal leading-relaxed">
+                    Operamos as marcas de fast-casual e alta gastronomia mais amadas do Brasil. Qualidade artesanal, sustentabilidade e inovaÃ§Ã£o em cada pedido.
+                </p>
+
+                <!-- Hero CTA Buttons -->
+                <div class="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                    <a href="#menu" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-base transition-all shadow-xl shadow-amber-500/30 hover:scale-105 active:scale-95 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span>Explorar Nosso CardÃ¡pio</span>
+                    </a>
+                    <a href="#franchise" class="w-full sm:w-auto px-8 py-4 rounded-xl glass-panel hover:bg-white/10 text-white font-semibold text-base transition-all border border-white/20 hover:scale-105 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-store"></i>
+                        <span>Abra uma Franquia</span>
+                    </a>
+                </div>
+
+                <!-- Key Metrics / Stats -->
+                <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 w-full max-w-4xl pt-8 border-t border-white/10">
+                    <div class="text-center p-3">
+                        <div class="text-3xl sm:text-4xl font-extrabold text-white">120+</div>
+                        <div class="text-xs sm:text-sm text-gray-400 mt-1">Restaurantes no Brasil</div>
+                    </div>
+                    <div class="text-center p-3">
+                        <div class="text-3xl sm:text-4xl font-extrabold text-amber-400">4</div>
+                        <div class="text-xs sm:text-sm text-gray-400 mt-1">Marcas Exclusivas</div>
+                    </div>
+                    <div class="text-center p-3">
+                        <div class="text-3xl sm:text-4xl font-extrabold text-white">4.9â˜…</div>
+                        <div class="text-xs sm:text-sm text-gray-400 mt-1">AvaliaÃ§Ã£o dos Clientes</div>
+                    </div>
+                    <div class="text-center p-3">
+                        <div class="text-3xl sm:text-4xl font-extrabold text-amber-400">2.5M+</div>
+                        <div class="text-xs sm:text-sm text-gray-400 mt-1">RefeiÃ§Ãµes Servidas/Ano</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABOUT US SECTION -->
+        <section id="about" class="py-20 relative bg-brand-dark/50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                    <!-- Left Images Grid -->
+                    <div class="relative grid grid-cols-2 gap-4">
+                        <div class="space-y-4">
+                            <img class="rounded-2xl object-cover h-64 w-full shadow-2xl border border-white/10 hover:scale-[1.02] transition-transform" 
+                                 src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=800&q=80" 
+                                 alt="Cozinha Profissional"
+                                 onerror="this.src='https://placehold.co/600x800/2a2a30/ffffff?text=Cozinha+Sabor%26Arte'">
+                            <div class="p-6 rounded-2xl glass-panel border border-amber-500/20">
+                                <i class="fa-solid fa-seedling text-3xl text-amber-400 mb-3"></i>
+                                <h4 class="font-bold text-white text-lg">100% OrgÃ¢nico & Local</h4>
+                                <p class="text-xs text-gray-400 mt-1">Parceria direta com produtores locais e agricultura familiar.</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4 pt-8">
+                            <div class="p-6 rounded-2xl glass-panel border border-white/10">
+                                <i class="fa-solid fa-award text-3xl text-amber-400 mb-3"></i>
+                                <h4 class="font-bold text-white text-lg">Qualidade Certificada</h4>
+                                <p class="text-xs text-gray-400 mt-1">PadrÃµes rÃ­gidos de higiene, sabor e frescor constante.</p>
+                            </div>
+                            <img class="rounded-2xl object-cover h-64 w-full shadow-2xl border border-white/10 hover:scale-[1.02] transition-transform" 
+                                 src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" 
+                                 alt="Ambiente Restaurante"
+                                 onerror="this.src='https://placehold.co/600x800/2a2a30/ffffff?text=Ambiente+Gourmet'">
+                        </div>
+                    </div>
+
+                    <!-- Right Content -->
+                    <div class="space-y-6">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                            Nossa HistÃ³ria & PropÃ³sito
+                        </div>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                            Uma holding gastronÃ´mica apaixonada pelo poder de <span class="text-amber-500">reunir pessoas</span>.
+                        </h2>
+                        <p class="text-gray-300 leading-relaxed">
+                            Fundada em 2012, a <strong>Sabor & Arte Corp</strong> comeÃ§ou como uma pequena pizzaria artesanal e expandiu para um ecossistema completo de restauraÃ§Ã£o rÃ¡pida e casual gourmet. Nosso compromisso vai alÃ©m do prato: entregamos sustentabilidade, ingredientes frescos de origem controlada e uma experiÃªncia memorÃ¡vel em cada canal de atendimento.
+                        </p>
+
+                        <div class="space-y-4 pt-2">
+                            <div class="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-leaf text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white">Compromisso ESG</h4>
+                                    <p class="text-sm text-gray-400">Embalagens 100% biodegradÃ¡veis e programa de desperdÃ­cio zero em todas as cozinhas centralizadas.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-truck-fast text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white">LogÃ­stica de Entrega PrÃ³pria</h4>
+                                    <p class="text-sm text-gray-400">Frota hÃ­brida e sistema inteligente que garante comida quente e na temperatura ideal em atÃ© 35 minutos.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex items-center gap-6">
+                            <a href="#brands" class="text-amber-400 font-semibold hover:text-amber-300 inline-flex items-center gap-2 group">
+                                <span>ConheÃ§a nossas 4 vertentes</span>
+                                <i class="fa-solid fa-chevron-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE BRANDS & MENU SHOWCASE SECTION -->
+        <section id="brands" class="py-20 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Section Header -->
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <span class="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                        Marcas & CardÃ¡pio Integrado
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-extrabold text-white mt-4">
+                        ConheÃ§a Nossos Conceitos CulinÃ¡rios
+                    </h2>
+                    <p class="text-gray-400 mt-4 text-base">
+                        Selecione uma marca para filtrar o cardÃ¡pio ou explore todas as nossas opÃ§Ãµes artesanais para pedir agora.
+                    </p>
+                </div>
+
+                <!-- Brand Filter Tabs -->
+                <div id="menu" class="flex items-center justify-center flex-wrap gap-3 mb-12">
+                    <button @click="activeCategory = 'all'" 
+                            :class="activeCategory === 'all' ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/25' : 'glass-panel text-gray-300 hover:text-white hover:bg-white/10'"
+                            class="px-5 py-2.5 rounded-xl text-sm transition-all duration-200 flex items-center gap-2">
+                        <i class="fa-solid fa-border-all"></i>
+                        <span>Todos os Pratos</span>
+                    </button>
+                    <template x-for="cat in categories" :key="cat.id">
+                        <button @click="activeCategory = cat.id" 
+                                :class="activeCategory === cat.id ? 'bg-amber-500 text-black font-bold shadow-lg shadow-amber-500/25' : 'glass-panel text-gray-300 hover:text-white hover:bg-white/10'"
+                                class="px-5 py-2.5 rounded-xl text-sm transition-all duration-200 flex items-center gap-2">
+                            <i :class="cat.icon"></i>
+                            <span x-text="cat.name"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Menu Items Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <template x-for="item in filteredMenuItems" :key="item.id">
+                        <div class="group rounded-2xl glass-panel border border-white/10 overflow-hidden flex flex-col hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1">
+                            <!-- Image Container -->
+                            <div class="relative h-48 overflow-hidden">
+                                <img :src="item.image" :alt="item.title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://placehold.co/600x400/2a2a30/ffffff?text=Sabor+%26+Arte'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                <span class="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-amber-400 text-xs font-semibold px-3 py-1 rounded-full border border-amber-500/30" x-text="item.brand"></span>
+                                <span class="absolute bottom-3 right-3 text-lg font-extrabold text-white bg-amber-500/90 text-black px-2.5 py-0.5 rounded-lg shadow" x-text="'R$ ' + item.price.toFixed(2)"></span>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="p-5 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <h3 class="font-bold text-lg text-white group-hover:text-amber-400 transition-colors" x-text="item.title"></h3>
+                                        <div class="flex items-center text-amber-400 text-xs font-semibold shrink-0">
+                                            <i class="fa-solid fa-star mr-1"></i>
+                                            <span x-text="item.rating"></span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed mb-4" x-text="item.description"></p>
+                                    
+                                    <!-- Tags -->
+                                    <div class="flex flex-wrap gap-1.5 mb-4">
+                                        <template x-for="tag in item.tags" :key="tag">
+                                            <span class="text-[10px] bg-white/5 text-gray-300 px-2 py-0.5 rounded-md border border-white/5" x-text="tag"></span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center gap-2 pt-2 border-t border-white/5">
+                                    <button @click="openModal(item)" class="flex-1 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-200 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-eye text-amber-400"></i>
+                                        <span>Detalhes</span>
+                                    </button>
+                                    <button @click="addToCart(item)" class="py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-1">
+                                        <i class="fa-solid fa-cart-plus"></i>
+                                        <span>Adicionar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
+        <!-- FRANCHISE & LOCATIONS FINDER SECTION -->
+        <section id="stores" class="py-20 bg-brand-dark/60 relative border-t border-b border-white/5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <!-- Left: Search Controls & Store List -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <span class="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                            Rede de Atendimento
+                        </span>
+                        <h2 class="text-3xl font-bold text-white">Encontre Nossas Unidades</h2>
+                        <p class="text-sm text-gray-400">Busque por cidade ou bairro para visualizar horÃ¡rios, comodidades e rotas de entrega.</p>
+
+                        <!-- Search input -->
+                        <div class="relative mt-4">
+                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" 
+                                   x-model="storeQuery" 
+                                   placeholder="Digite cidade ou bairro (ex: SÃ£o Paulo, Jardins)..."
+                                   class="w-full pl-11 pr-4 py-3 rounded-xl glass-panel text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 border border-white/10">
+                        </div>
+
+                        <!-- Store List -->
+                        <div class="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar pr-1 pt-2">
+                            <template x-for="store in filteredStores" :key="store.id">
+                                <div @click="selectedStore = store" 
+                                     :class="selectedStore.id === store.id ? 'border-amber-500 bg-amber-500/10' : 'border-white/10 hover:border-white/20 bg-white/5'"
+                                     class="p-4 rounded-xl border cursor-pointer transition-all">
+                                    <div class="flex items-start justify-between">
+                                        <h4 class="font-bold text-white text-base" x-text="store.name"></h4>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" x-text="store.status"></span>
+                                    </div>
+                                    <p class="text-xs text-gray-300 mt-1" x-text="store.address"></p>
+                                    <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                                        <span class="flex items-center gap-1"><i class="fa-solid fa-clock text-amber-400"></i> <span x-text="store.hours"></span></span>
+                                        <span class="flex items-center gap-1"><i class="fa-solid fa-phone text-amber-400"></i> <span x-text="store.phone"></span></span>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="filteredStores.length === 0" class="text-center py-8 text-gray-500 text-sm">
+                                Nenhuma unidade encontrada para esta busca.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Interactive Store Map & Detail Panel -->
+                    <div class="lg:col-span-2 rounded-2xl glass-panel border border-white/10 p-6 min-h-[450px] flex flex-col justify-between relative overflow-hidden">
+                        <!-- Simulated Interactive Map Background -->
+                        <div class="absolute inset-0 opacity-30 z-0">
+                            <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=80" 
+                                 class="w-full h-full object-cover filter grayscale contrast-125"
+                                 alt="Simulated Map"
+                                 onerror="this.src='https://placehold.co/1200x800/121214/ffffff?text=Mapa+de+Unidades'">
+                        </div>
+
+                        <!-- Map Content Overlay -->
+                        <div class="relative z-10 flex flex-col h-full justify-between">
+                            <!-- Top Info Header -->
+                            <div class="flex flex-wrap items-center justify-between gap-4 glass-panel p-4 rounded-xl border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-white text-lg" x-text="selectedStore.name"></h3>
+                                        <p class="text-xs text-gray-300" x-text="selectedStore.address"></p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <a :href="'tel:' + selectedStore.phone" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1.5">
+                                        <i class="fa-solid fa-phone text-amber-400"></i>
+                                        <span>Ligar</span>
+                                    </a>
+                                    <button @click="showToast('Rota simulada enviada para o seu dispositivo!')" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-colors shadow-md">
+                                        Como Chegar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Map Pins Visual Simulation -->
+                            <div class="my-12 flex items-center justify-center">
+                                <div class="relative text-center animate-bounce">
+                                    <div class="w-16 h-16 rounded-full bg-amber-500/30 flex items-center justify-center border-2 border-amber-500 mx-auto shadow-2xl">
+                                        <i class="fa-solid fa-utensils text-amber-400 text-2xl"></i>
+                                    </div>
+                                    <span class="inline-block mt-2 px-3 py-1 rounded-full bg-black/80 text-white text-xs font-semibold border border-white/20" x-text="selectedStore.name"></span>
+                                </div>
+                            </div>
+
+                            <!-- Amenities & Services Bottom Bar -->
+                            <div class="glass-panel p-4 rounded-xl border border-white/10">
+                                <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Comodidades DisponÃ­veis nesta Unidade</h5>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="feature in selectedStore.features" :key="feature">
+                                        <span class="px-3 py-1 rounded-lg bg-white/5 text-gray-200 text-xs font-medium border border-white/5 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-check text-amber-400 text-[10px]"></i>
+                                            <span x-text="feature"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CAREER & FRANCHISE INQUIRY SECTION -->
+        <section id="franchise" class="py-20 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <!-- Franchise Card -->
+                    <div class="p-8 sm:p-10 rounded-3xl glass-panel border border-amber-500/30 flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl"></div>
+                        <div>
+                            <span class="px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                                ExpansÃ£o & NegÃ³cios
+                            </span>
+                            <h3 class="text-3xl font-bold text-white mt-4">Abra uma Franquia Sabor & Arte</h3>
+                            <p class="text-gray-300 text-sm mt-3 leading-relaxed">
+                                FaÃ§a parte de uma das holdings de maior crescimento do setor alimentÃ­cio. Oferecemos suporte completo: escolha do ponto, treinamento de equipe, gestÃ£o operacional e marketing contÃ­nuo.
+                            </p>
+
+                            <ul class="space-y-3 mt-6 text-sm text-gray-300">
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-amber-400"></i> Payback estimado de 18 a 24 meses</li>
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-amber-400"></i> Margem de lucro mÃ©dia de 18% a 25%</li>
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-amber-400"></i> Hub logÃ­stico prÃ³prio e suprimentos centralizados</li>
+                            </ul>
+                        </div>
+
+                        <!-- Form -->
+                        <form @submit.prevent="submitFranchiseForm()" class="mt-8 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input type="text" x-model="franchiseForm.name" required placeholder="Seu nome completo" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500">
+                                <input type="email" x-model="franchiseForm.email" required placeholder="Seu e-mail corporativo" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input type="tel" x-model="franchiseForm.phone" required placeholder="Telefone / WhatsApp" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500">
+                                <input type="text" x-model="franchiseForm.city" required placeholder="Cidade de Interesse" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500">
+                            </div>
+                            <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-sm transition-all shadow-lg shadow-amber-500/20 active:scale-95">
+                                Solicitar ApresentaÃ§Ã£o Comercial
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Careers Card -->
+                    <div id="careers" class="p-8 sm:p-10 rounded-3xl glass-panel border border-white/10 flex flex-col justify-between">
+                        <div>
+                            <span class="px-3.5 py-1.5 rounded-full bg-white/10 text-gray-300 text-xs font-bold uppercase tracking-wider">
+                                Talentos & Carreiras
+                            </span>
+                            <h3 class="text-3xl font-bold text-white mt-4">Trabalhe Conosco</h3>
+                            <p class="text-gray-300 text-sm mt-3 leading-relaxed">
+                                Procuramos chefs, atendentes, gerentes e especialistas de logÃ­stica com fome de crescer. Oferecemos plano de carreira estruturado, ambiente dinÃ¢mico e benefÃ­cios corporativos avanÃ§ados.
+                            </p>
+
+                            <div class="mt-6 space-y-3">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Vagas em Destaque:</h4>
+                                <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex justify-between items-center">
+                                    <div>
+                                        <div class="font-bold text-white text-sm">Gerente de OperaÃ§Ãµes de Loja</div>
+                                        <div class="text-xs text-gray-400">SÃ£o Paulo, SP â€¢ Presencial</div>
+                                    </div>
+                                    <span class="text-xs text-amber-400 font-semibold">Candidatar</span>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/5 border border-white/5 flex justify-between items-center">
+                                    <div>
+                                        <div class="font-bold text-white text-sm">Chef de Cozinha Executivo</div>
+                                        <div class="text-xs text-gray-400">Rio de Janeiro, RJ â€¢ Presencial</div>
+                                    </div>
+                                    <span class="text-xs text-amber-400 font-semibold">Candidatar</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form -->
+                        <form @submit.prevent="submitCareerForm()" class="mt-8 space-y-4">
+                            <input type="text" x-model="careerForm.name" required placeholder="Seu Nome Completo" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input type="email" x-model="careerForm.email" required placeholder="E-mail" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500">
+                                <select x-model="careerForm.role" required class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-gray-300 text-sm focus:outline-none focus:border-amber-500">
+                                    <option value="" disabled selected>Ãrea de Interesse</option>
+                                    <option value="cozinha">Cozinha & Gastronomia</option>
+                                    <option value="atendimento">Atendimento & SalÃ£o</option>
+                                    <option value="gestao">GestÃ£o & GerÃªncia</option>                                    <option value="logistica">LogÃ­stica & Entregas</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all border border-white/10 active:scale-95">
+                                Enviar CurrÃ­culo / Candidatura
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-black border-t border-white/10 pt-16 pb-12 text-gray-400 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
+                <!-- Brand Info -->
+                <div class="lg:col-span-2 space-y-4">
+                    <a href="#" class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-black font-extrabold text-lg shadow-lg">
+                            <i class="fa-solid fa-utensils"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight text-white">Sabor & Arte <span class="text-amber-500 text-xs tracking-widest uppercase block font-semibold">Corp</span></span>
+                    </a>
+                    <p class="text-gray-400 text-xs leading-relaxed max-w-sm">
+                        Holding gastronÃ´mica referÃªncia em inovaÃ§Ã£o, padrÃ£o de excelÃªncia e culinÃ¡ria artesanal. Transformando momentos simples em memÃ³rias inesquecÃ­veis.
+                    </p>
+                    <div class="flex items-center gap-4 text-gray-400 pt-2">
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="#" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <!-- Navigation Columns -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4 text-xs uppercase tracking-wider">Marcas do Grupo</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        <li><a href="#brands" class="hover:text-amber-400 transition-colors">Artesanal Burger Lab</a></li>
+                        <li><a href="#brands" class="hover:text-amber-400 transition-colors">La Forno Pizzaria</a></li>
+                        <li><a href="#brands" class="hover:text-amber-400 transition-colors">Verde & Fresh Bowls</a></li>
+                        <li><a href="#brands" class="hover:text-amber-400 transition-colors">Dolce & CaffÃ¨ Bistro</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4 text-xs uppercase tracking-wider">Corporativo</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        <li><a href="#about" class="hover:text-amber-400 transition-colors">Sobre o Grupo</a></li>
+                        <li><a href="#franchise" class="hover:text-amber-400 transition-colors">Seja um Franqueado</a></li>
+                        <li><a href="#careers" class="hover:text-amber-400 transition-colors">Trabalhe Conosco</a></li>
+                        <li><a href="#stores" class="hover:text-amber-400 transition-colors">Encontrar Unidades</a></li>
+                    </ul>
+                </div>
+
+                <!-- Newsletter -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4 text-xs uppercase tracking-wider">Receba Novidades</h4>
+                    <p class="text-xs text-gray-400 mb-3">Inscreva-se para receber convites corporativos e cupons de lanÃ§amento.</p>
+                    <form @submit.prevent="submitNewsletter()" class="space-y-2">
+                        <input type="email" x-model="newsletterEmail" required placeholder="Seu melhor e-mail" class="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-amber-500">
+                        <button type="submit" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-colors shadow">
+                            Cadastrar
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-4">
+                <div>
+                    Â© 2026 Sabor & Arte Corp. Todos os direitos reservados. Projeto FictÃ­cio de PortfÃ³lio.
+                </div>
+                <div class="flex items-center gap-6">
+                    <a href="#" class="hover:text-gray-400 transition-colors">Privacidade</a>
+                    <a href="#" class="hover:text-gray-400 transition-colors">Termos de Uso</a>
+                    <a href="#" class="hover:text-gray-400 transition-colors">Compliance & ESG</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ITEM DETAIL MODAL -->
+    <div x-show="selectedModalItem" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+         style="display: none;">
+        <div @click.away="selectedModalItem = null" 
+             class="relative w-full max-w-lg rounded-3xl glass-panel border border-white/10 overflow-hidden shadow-2xl">
+            <!-- Close button -->
+            <button @click="selectedModalItem = null" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 text-white hover:bg-black flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <template x-if="selectedModalItem">
+                <div>
+                    <!-- Image -->
+                    <div class="relative h-60">
+                        <img :src="selectedModalItem.image" :alt="selectedModalItem.title" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#1a1a1e] via-transparent to-transparent"></div>
+                        <span class="absolute bottom-4 left-6 px-3 py-1 rounded-full bg-amber-500 text-black text-xs font-bold" x-text="selectedModalItem.brand"></span>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="p-6 space-y-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-2xl font-bold text-white" x-text="selectedModalItem.title"></h3>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-amber-400 font-semibold">
+                                    <i class="fa-solid fa-star"></i>
+                                    <span x-text="selectedModalItem.rating + ' (120+ avaliaÃ§Ãµes)'"></span>
+                                </div>
+                            </div>
+                            <span class="text-2xl font-extrabold text-amber-400" x-text="'R$ ' + selectedModalItem.price.toFixed(2)"></span>
+                        </div>
+
+                        <p class="text-sm text-gray-300 leading-relaxed" x-text="selectedModalItem.description"></p>
+
+                        <!-- Extra details -->
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2 text-xs text-gray-300">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Tempo estimado de preparo:</span>
+                                <span class="font-semibold text-white">20 - 30 min</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Calorias estimadas:</span>
+                                <span class="font-semibold text-white">550 kcal</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Origem dos ingredientes:</span>
+                                <span class="font-semibold text-white">Produtores Locais Certificados</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex items-center gap-3">
+                            <button @click="addToCart(selectedModalItem); selectedModalItem = null;" 
+                                    class="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-cart-plus"></i>
+                                <span>Adicionar ao Pedido â€¢ R$ <span x-text="selectedModalItem.price.toFixed(2)"></span></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- SLIDING CART SIDEBAR -->
+    <div x-show="isCartOpen" 
+         class="fixed inset-0 z-50 overflow-hidden" 
+         style="display: none;">
+        <!-- Backdrop -->
+        <div @click="isCartOpen = false" 
+             x-show="isCartOpen"
+             x-transition:enter="transition-opacity ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="absolute inset-0 bg-black/70 backdrop-blur-xs"></div>
+
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div x-show="isCartOpen"
+                 x-transition:enter="transform transition ease-in-out duration-300"
+                 x-transition:enter-start="translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transform transition ease-in-out duration-300"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="translate-x-full"
+                 class="w-screen max-w-md bg-brand-card border-l border-white/10 shadow-2xl flex flex-col justify-between">
+
+                <!-- Cart Header -->
+                <div class="p-6 border-b border-white/10 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-bag-shopping text-amber-500 text-xl"></i>
+                        <h3 class="text-lg font-bold text-white">Seu Pedido</h3>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold" x-text="cartTotalCount + ' itens'"></span>
+                    </div>
+                    <button @click="isCartOpen = false" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/5">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Cart Items List -->
+                <div class="p-6 flex-1 overflow-y-auto custom-scrollbar space-y-4">
+                    <template x-for="item in cart" :key="item.id">
+                        <div class="flex items-center gap-4 p-3 rounded-2xl bg-white/5 border border-white/5">
+                            <img :src="item.image" :alt="item.title" class="w-16 h-16 rounded-xl object-cover shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-white text-sm truncate" x-text="item.title"></h4>
+                                <div class="text-xs text-amber-400 font-semibold mt-0.5" x-text="'R$ ' + (item.price * item.quantity).toFixed(2)"></div>
+                                
+                                <!-- Quantity controls -->
+                                <div class="flex items-center gap-3 mt-2">
+                                    <button @click="updateCartQty(item.id, -1)" class="w-6 h-6 rounded-md bg-white/10 text-white hover:bg-amber-500 hover:text-black flex items-center justify-center transition-colors text-xs font-bold">-</button>
+                                    <span class="text-xs font-bold text-white" x-text="item.quantity"></span>
+                                    <button @click="updateCartQty(item.id, 1)" class="w-6 h-6 rounded-md bg-white/10 text-white hover:bg-amber-500 hover:text-black flex items-center justify-center transition-colors text-xs font-bold">+</button>
+                                </div>
+                            </div>
+                            <button @click="removeFromCart(item.id)" class="text-gray-500 hover:text-red-400 p-1">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
+                    </template>
+
+                    <div x-show="cart.length === 0" class="text-center py-16 text-gray-500 space-y-3">
+                        <i class="fa-solid fa-cart-arrow-down text-4xl text-gray-600"></i>
+                        <p class="text-sm">Seu carrinho estÃ¡ vazio no momento.</p>
+                        <a href="#menu" @click="isCartOpen = false" class="inline-block text-xs font-semibold text-amber-400 hover:underline">Explorar Nosso CardÃ¡pio</a>
+                    </div>
+                </div>
+
+                <!-- Cart Footer Summary -->
+                <div x-show="cart.length > 0" class="p-6 border-t border-white/10 bg-black/40 space-y-4">
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between text-gray-400">
+                            <span>Subtotal</span>
+                            <span class="text-white font-semibold" x-text="'R$ ' + cartSubtotal.toFixed(2)"></span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Taxa de Entrega Simulada</span>
+                            <span class="text-emerald-400 font-semibold" x-text="cartSubtotal > 100 ? 'GRÃTIS' : 'R$ 8,90'"></span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-white pt-2 border-t border-white/10">
+                            <span>Total</span>
+                            <span class="text-amber-400" x-text="'R$ ' + cartFinalTotal.toFixed(2)"></span>
+                        </div>
+                    </div>
+
+                    <button @click="checkoutSimulation()" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2">
+                        <span>Finalizar Pedido Simulada</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT SUCCESS MODAL -->
+    <div x-show="isCheckoutModalOpen" 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+         style="display: none;">
+        <div class="bg-brand-card p-8 rounded-3xl border border-amber-500/30 max-w-md w-full text-center space-y-6 shadow-2xl">
+            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-3xl mx-auto border border-emerald-500/30">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <div>
+                <h3 class="text-2xl font-bold text-white">Pedido Realizado com Sucesso!</h3>
+                <p class="text-xs text-gray-300 mt-2">
+                    Este Ã© um simulador interativo de pedido para o portfÃ³lio. Seu pedido simulado <strong class="text-amber-400">#SA-8942</strong> foi recebido pela cozinha central da Sabor & Arte.
+                </p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/5 text-left text-xs space-y-1.5 text-gray-300 border border-white/5">
+                <div><span class="text-gray-400">PrevisÃ£o de Entrega:</span> 25-35 minutos</div>
+                <div><span class="text-gray-400">Forma de Pagamento:</span> CartÃ£o na Entrega / PIX</div>
+                <div><span class="text-gray-400">Status:</span> Em preparaÃ§Ã£o na cozinha</div>
+            </div>
+            <button @click="isCheckoutModalOpen = false" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm transition-colors">
+                Concluir & Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- Alpine JS Application Logic -->
+<script src="app.js"></script>
+</body>
+</html>
